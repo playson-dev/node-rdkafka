@@ -5,6 +5,16 @@ WORKDIR /usr/app
 ADD ./builder.sh .
 ADD ./.npmrc .
 
-RUN chmod +x ./builder.sh
+RUN apk add --no-cache \
+    ca-certificates \
+    cyrus-sasl-dev \
+    openssl-dev \
+    make \
+    gcc \
+    g++ \
+    bash \
+    python3 && \
+    npm install -g node-gyp && \
+    chmod +x ./builder.sh
 
 ENTRYPOINT /usr/app/builder.sh

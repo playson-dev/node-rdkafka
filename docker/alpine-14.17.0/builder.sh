@@ -20,6 +20,8 @@ rm -rf ./node_modules ./build
 
 npm config set registry https://npm.pkg.github.com/playson-dev
 
+npm cache clean --force
+
 npm i
 
 npx node-gyp rebuild
