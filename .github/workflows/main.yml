@@ -1,0 +1,91 @@
+name: node rdkafka CI
+
+on:
+  push:
+
+jobs:
+  build-rdkafka:
+    runs-on: ubuntu-latest
+    name: build and push rdkafka package
+
+    strategy:
+      matrix:
+        node-version: [18.17.0]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Checkout tag-version-action
+        uses: actions/checkout@v2
+        with:
+          repository: playson-dev/tag-version-action
+          token: ${{ secrets.PLAYSON_RND_BOT_PERSONAL_TOKEN }}
+          ref: v1.7.8
+          path: ./.github/actions/tag-version-action
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          registry-url: 'https://npm.pkg.github.com'
+          node-version: ${{ matrix.node-version }}
+
+      - name: Init submodule
+        run: |
+          git submodule init
+          git submodule update
+
+      - name: Install dependencies
+        if: steps.cache-modules.outputs.cache-hit != 'true'
+        run: npm i
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+
+      - name: Run unit tests
+        run: make test
+        env:
+          NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+
+#      - name: Run e2e tests
+#        run: make e2e
+#        env:
+#          NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+
+      - name: Run all codegen
+        run: node ./ci/prepublish.js
+
+      - name: Generate prebuild
+        run: npx bundle-build-create
+
+      - name: Generate prebuild for alpine
+        env:
+          NPM_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
+        run: |
+          rm -rf build/ node_modules/
+          mkdir ./alpine
+          cd ./docker/alpine-18.17.0
+          docker build -t rdkafka-builder:18.17.0 .
+          docker run --name builder-18.17.0 -d -e NPM_TOKEN=$NPM_TOKEN rdkafka-builder:18.17.0
+          cd ../..
+          docker cp . builder-18.17.0:/usr/app/node-rdkafka
+          docker attach builder-18.17.0
+          docker logs builder-18.17.0
+          docker cp builder-18.17.0:/usr/app/node-rdkafka/prebuilds ./alpine
+          cp ./alpine/prebuilds/*.tgz ./prebuilds
+
+      - name: Check all prebuilds
+        run: ls ./prebuilds
+
+      - name: Set version
+        uses: ./.github/actions/tag-version-action
+        id: package-version
+        with:
+          npm-publish: true
+          npm-auth-token: ${{ secrets.NODE_AUTH_TOKEN }}
+          github-token: ${{ secrets.PLAYSON_RND_BOT_PERSONAL_TOKEN }}
+
+      - name: Get version
+        run: |
+          echo Git tag: ${{ steps.package-version.outputs.git-tag }}
+          echo Build version: ${{ steps.package-version.outputs.version }}
+        shell: bash
