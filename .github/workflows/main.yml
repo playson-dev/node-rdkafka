@@ -13,7 +13,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.16.0]
+        node-version: [18.17.0]
 
     steps:
       - name: Checkout
@@ -40,20 +40,20 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-modules.outputs.cache-hit != 'true'
-        run: npm i
+        run: npm install
         env:
           NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
 
       - name: Run unit tests
-        run: make test
+        run: npm run test
         env:
           NODE_AUTH_TOKEN: ${{secrets.NODE_AUTH_TOKEN}}
 
-      - name: Run all codegen
-        run: node ./ci/prepublish.js
-
       - name: Generate prebuild
         run: npx bundle-build-create
+
+      - name: Run all pre publish
+        run: node ./ci/prepublish.js
 
       - name: Generate prebuild for alpine
         env:
@@ -61,14 +61,14 @@ jobs:
         run: |
           rm -rf build/ node_modules/
           mkdir ./alpine
-          cd ./docker/alpine-14.17.0
-          docker build -t rdkafka-builder:14.17.0 .
-          docker run --name builder-14.17.0 -d -e NPM_TOKEN=$NPM_TOKEN rdkafka-builder:14.17.0
+          cd ./docker/alpine-18.17.0
+          docker build -t rdkafka-builder:18.17.0 .
+          docker run --name builder-18.17.0 -d -e NPM_TOKEN=$NPM_TOKEN rdkafka-builder:18.17.0
           cd ../..
-          docker cp . builder-14.17.0:/usr/app/node-rdkafka
-          docker attach builder-14.17.0
-          docker logs builder-14.17.0
-          docker cp builder-14.17.0:/usr/app/node-rdkafka/prebuilds ./alpine
+          docker cp . builder-18.17.0:/usr/app/node-rdkafka
+          docker attach builder-18.17.0
+          docker logs builder-18.17.0 
+          docker cp builder-18.17.0:/usr/app/node-rdkafka/prebuilds ./alpine
           cp ./alpine/prebuilds/*.tgz ./prebuilds
 
       - name: Check all prebuilds

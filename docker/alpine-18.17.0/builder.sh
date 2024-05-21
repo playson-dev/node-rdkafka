@@ -4,7 +4,7 @@ set -eu;
 
 echo "Start building rdkafka"
 
-apk add --no-cache ca-certificates cyrus-sasl-dev openssl-dev make gcc g++ bash python3
+apk add --no-cache ca-certificates cyrus-sasl-dev openssl-dev make gcc g++ bash python3 zstd-libs zstd-dev
 
 while [ ! -f /usr/app/node-rdkafka/package.json ]; do
   echo "Waiting for rdkafka dir"
@@ -20,9 +20,7 @@ rm -rf ./node_modules ./build
 
 npm config set registry https://npm.pkg.github.com/playson-dev
 
-npm cache clean --force
-
-npm i
+npm install
 
 npx node-gyp rebuild
 

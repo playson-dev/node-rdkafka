@@ -9,7 +9,7 @@
     "build": "node-gyp build",
     "test": "make test",
     "test:e2e": "KAFKA_HOST=localhost:19093 make e2e",
-    "install": "node-gyp rebuild",
+    "install": "bundle-build-install || node-gyp rebuild",
     "prepack": "node ./ci/prepublish.js"
   },
   "keywords": [
