@@ -219,6 +219,63 @@ Baton KafkaConsumer::Unassign() {
   return Baton(RdKafka::ERR_NO_ERROR);
 }
 
+Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition *> partitions) {
+  if (!IsConnected()) {
+    return Baton(RdKafka::ERR__STATE, "KafkaConsumer is disconnected");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::Error *e = consumer->incremental_assign(partitions);
+
+  if (e) {
+    RdKafka::ErrorCode errcode = e->code();
+    delete e;
+    return Baton(errcode);
+  }
+
+  m_partition_cnt += partitions.size();
+  for (auto i = partitions.begin(); i != partitions.end(); ++i) {
+    m_partitions.push_back(*i);
+  }
+  partitions.clear();
+
+  return Baton(RdKafka::ERR_NO_ERROR);
+}
+
+Baton KafkaConsumer::IncrementalUnassign(std::vector<RdKafka::TopicPartition*> partitions) {
+  if (!IsClosing() && !IsConnected()) {
+    return Baton(RdKafka::ERR__STATE);
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  RdKafka::Error *e = consumer->incremental_unassign(partitions);
+  if (e) {
+    RdKafka::ErrorCode errcode = e->code();
+    delete e;
+    return Baton(errcode);
+  }
+
+  RdKafka::TopicPartition::destroy(partitions);
+
+  m_partitions.erase(
+    std::remove_if(
+      m_partitions.begin(),
+      m_partitions.end(),
+      [&partitions](RdKafka::TopicPartition *x) -> bool {
+      return std::find(
+        partitions.begin(),
+        partitions.end(), x) != partitions.end();
+    }),
+    m_partitions.end());
+  m_partition_cnt -= partitions.size();
+
+  return Baton(RdKafka::ERR_NO_ERROR);
+}
+
 Baton KafkaConsumer::Commit(std::vector<RdKafka::TopicPartition*> toppars) {
   if (!IsConnected()) {
     return Baton(RdKafka::ERR__STATE);

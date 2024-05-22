@@ -74,6 +74,9 @@ class KafkaConsumer : public Connection {
   Baton Assign(std::vector<RdKafka::TopicPartition*>);
   Baton Unassign();
 
+  Baton IncrementalAssign(std::vector<RdKafka::TopicPartition*>);
+  Baton IncrementalUnassign(std::vector<RdKafka::TopicPartition*>);
+
   Baton Seek(const RdKafka::TopicPartition &partition, int timeout_ms);
 
   std::string Name();
@@ -106,6 +109,8 @@ class KafkaConsumer : public Connection {
   static NAN_METHOD(NodeDisconnect);
   static NAN_METHOD(NodeAssign);
   static NAN_METHOD(NodeUnassign);
+  static NAN_METHOD(NodeIncrementalAssign);
+  static NAN_METHOD(NodeIncrementalUnassign);
   static NAN_METHOD(NodeAssignments);
   static NAN_METHOD(NodeUnsubscribe);
   static NAN_METHOD(NodeCommit);
