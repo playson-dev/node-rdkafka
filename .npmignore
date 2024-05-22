@@ -8,3 +8,8 @@ deps/librdkafka/config.h
 build
 .github
 .vscode
+docker
+ci
+e2e
+test
+example
