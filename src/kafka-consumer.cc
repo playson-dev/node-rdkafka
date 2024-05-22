@@ -553,6 +553,17 @@ std::string KafkaConsumer::Name() {
   return std::string(m_client->name());
 }
 
+std::string KafkaConsumer::RebalanceProtocol() {
+  if (!IsConnected()) {
+    return std::string("NONE");
+  }
+
+  RdKafka::KafkaConsumer* consumer =
+    dynamic_cast<RdKafka::KafkaConsumer*>(m_client);
+
+  return consumer->rebalance_protocol();
+}
+
 Nan::Persistent<v8::Function> KafkaConsumer::constructor;
 
 void KafkaConsumer::Init(v8::Local<v8::Object> exports) {
