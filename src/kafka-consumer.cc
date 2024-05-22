@@ -17,18 +17,6 @@ using Nan::FunctionCallbackInfo;
 
 namespace NodeKafka {
 
-Baton rdkafkaConsumerErrorToBaton(RdKafka::Error* error) {
-  if ( NULL == error) {
-    return Baton(RdKafka::ERR_NO_ERROR);
-  }
-  else {
-    Baton result(error->code(), error->str(), error->is_fatal(),
-                 error->is_retriable(), error->txn_requires_abort());
-    delete error;
-    return result;
-  }
-}
-
 /**
  * @brief KafkaConsumer v8 wrapped object.
  *
@@ -250,7 +238,7 @@ Baton KafkaConsumer::IncrementalAssign(std::vector<RdKafka::TopicPartition*> par
     RdKafka::TopicPartition::destroy(partitions);
   }
 
-  return rdkafkaConsumerErrorToBaton(error);
+  return rdkafkaErrorToBaton(error);
 }
 
 Baton KafkaConsumer::IncrementalUnassign(std::vector<RdKafka::TopicPartition*> partitions) {
@@ -287,7 +275,7 @@ Baton KafkaConsumer::IncrementalUnassign(std::vector<RdKafka::TopicPartition*> p
   // that needed to be deleted.
   RdKafka::TopicPartition::destroy(partitions);
 
-  return rdkafkaConsumerErrorToBaton(error);
+  return rdkafkaErrorToBaton(error);
 }
 
 Baton KafkaConsumer::Commit(std::vector<RdKafka::TopicPartition*> toppars) {
