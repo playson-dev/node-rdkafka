@@ -2,7 +2,7 @@
   "name": "@playson-dev/node-rdkafka",
   "version": "0.0.0-develop",
   "description": "Node.js bindings for librdkafka",
-  "librdkafka": "2.3.0",
+  "librdkafka": "2.5.3",
   "main": "lib/index.js",
   "scripts": {
     "configure": "node-gyp configure",
